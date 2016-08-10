@@ -21,8 +21,8 @@ fi;
 
 if ! mkdir "$token" 2>/dev/null;	#mkdir is an atomic function
 then
-		echo "[-] Token found!" >&2;
-		exit 1;
+	echo "[-] Token found!" >&2;
+	exit 1;
 fi;
 
 which iptables >/dev/null;
@@ -34,43 +34,43 @@ fi;
 which iptables curl dig >/dev/null;
 if [ $? -ne 0 ];
 then
-		echo -n "[-] " >&2;
-		arr="iptables:iptables curl:curl dig:dnsutils";
-		toi="";
-		x=0;
-		OFS=$IFS;
-		IFS=" ";
-		for a in ${arr};
-		do
-				app="$(echo "$a" | cut -d ":" -f 1)";
-				which "$app" >/dev/null;
-				if [ $? -ne 0 ];
-				then
-						toi="${toi}$(echo "$a" | cut -d ":" -f 2) ";
-						if [ $x -gt 0 ];
-						then
-								echo -n ", " >&2;
-						fi;
-						x=$(( x + 1 ));
-						echo -n "$app" >&2;
-				fi;
-		done;
-		IFS=$OFS;
-		echo " missing." >&2;
-		echo "Consider running:" >&2;
-		echo "sudo apt-get install ${toi}" >&2;
-		rm -rf "$token";
-		exit 1;
+	echo -n "[-] " >&2;
+	arr="iptables:iptables curl:curl dig:dnsutils";
+	toi="";
+	x=0;
+	OFS=$IFS;
+	IFS=" ";
+	for a in ${arr};
+	do
+		app="$(echo "$a" | cut -d ":" -f 1)";
+		which "$app" >/dev/null;
+		if [ $? -ne 0 ];
+		then
+			toi="${toi}$(echo "$a" | cut -d ":" -f 2) ";
+			if [ $x -gt 0 ];
+			then
+				echo -n ", " >&2;
+			fi;
+			x=$(( x + 1 ));
+			echo -n "$app" >&2;
+		fi;
+	done;
+	IFS=$OFS;
+	echo " missing." >&2;
+	echo "Consider running:" >&2;
+	echo "sudo apt-get install ${toi}" >&2;
+	rm -rf "$token";
+	exit 1;
 fi;
 
 echo -n "[+] Requesting IP"
 myip=$(dig +short myip.opendns.com @resolver1.opendns.com);	#you can put your static ip here in case...
 if [ $? -ne 0 ];
 then
-		echo "";
-		echo "[-] Something went wrong while requesting the current IP!" >&2;
-		rm -rf "$token";
-		exit 2;
+	echo "";
+	echo "[-] Something went wrong while requesting the current IP!" >&2;
+	rm -rf "$token";
+	exit 2;
 fi;
 echo ": $myip";
 
@@ -78,10 +78,10 @@ echo -n "[+] Downloading the exit nodes list..";
 torlist=$(curl -s "https://check.torproject.org/cgi-bin/TorBulkExitList.py?ip=${myip}" | grep -v "#" | grep -oP "^[0-9.]+$" | sort -n);	#let's avoid strange things
 if [ $? -ne 0 ];
 then
-		echo "";
-		echo "[-] Something went wrong while requesting the tor exit nodes!" >&2;
-		rm -rf "$token";
-		exit 3;
+	echo "";
+	echo "[-] Something went wrong while requesting the tor exit nodes!" >&2;
+	rm -rf "$token";
+	exit 3;
 fi;
 echo " Done.";
 
@@ -90,7 +90,7 @@ iptables -w -D INPUT -j "$chainname" 2>/dev/null;	#let's avoid potential duplica
 iptables -w -N "$chainname" 2>/dev/null;
 if [ $? -ne 0 ];		#it's not the first time
 then
-		iptables -w -F "$chainname";
+	iptables -w -F "$chainname";
 fi;
 
 echo "[+] Banning tor nodes..";
@@ -99,8 +99,8 @@ iptables-save -c | grep -v "^#" | head -n -1 > "$token/ipt";
 
 for ip in ${torlist[@]};
 do
-		echo -en "\r\033[K\tBanning $ip...";
-		echo "[0:0] -A \"$chainname\" -s \"$ip\" -j REJECT --reject-with icmp-port-unreachable" >> "$token/ipt";
+	echo -en "\r\033[K\tBanning $ip...";
+	echo "[0:0] -A \"$chainname\" -s \"$ip\" -j REJECT --reject-with icmp-port-unreachable" >> "$token/ipt";
 done;
 
 echo "COMMIT" >> "$token/ipt";
